@@ -10,79 +10,16 @@ import {
   ChevronDown, 
   X
 } from 'lucide-react';
-import { getLowestOffer, getUnitPrice, getDiscountPercentage } from '../../utils/pricing';
+import { filterAndSortProducts } from '../../utils/search';
+import { activeProductProvider } from '../../services/productDataProvider';
 
 export const ProductCatalog: React.FC = () => {
   const { products, filterState, setFilterState, resetFilters } = useBeauty();
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Filter and sort computation
+  // Robust search & filter computation using normalized multi-token matching
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      // 1. Search Query
-      if (filterState.search.trim()) {
-        const q = filterState.search.toLowerCase();
-        const matchesName = product.name.toLowerCase().includes(q);
-        const matchesBrand = product.brand.toLowerCase().includes(q);
-        const matchesCategory = product.category.toLowerCase().includes(q);
-        const matchesIngredient = product.keyIngredients.some(ing => ing.toLowerCase().includes(q));
-        const matchesConcern = product.concerns.some(c => c.toLowerCase().includes(q));
-        if (!matchesName && !matchesBrand && !matchesCategory && !matchesIngredient && !matchesConcern) {
-          return false;
-        }
-      }
-
-      // 2. Category
-      if (filterState.category !== 'all' && product.category !== filterState.category) {
-        return false;
-      }
-
-      // 3. Brand
-      if (filterState.brand !== 'all' && product.brand !== filterState.brand) {
-        return false;
-      }
-
-      // 4. Skin Type
-      if (filterState.skinType !== 'all') {
-        const matchesSkin = product.skinTypes.includes(filterState.skinType) || product.skinTypes.includes('All');
-        if (!matchesSkin) return false;
-      }
-
-      // 5. Concern
-      if (filterState.concern !== 'all') {
-        if (!product.concerns.includes(filterState.concern)) return false;
-      }
-
-      // 6. Price Range
-      const bestPrice = getLowestOffer(product)?.price || product.mrp;
-      if (bestPrice < filterState.minPrice || bestPrice > filterState.maxPrice) {
-        return false;
-      }
-
-      return true;
-    }).sort((a, b) => {
-      const priceA = getLowestOffer(a)?.price || a.mrp;
-      const priceB = getLowestOffer(b)?.price || b.mrp;
-
-      switch (filterState.sortBy) {
-        case 'price-low':
-          return priceA - priceB;
-        case 'price-high':
-          return priceB - priceA;
-        case 'unit-price':
-          return getUnitPrice(priceA, a.size) - getUnitPrice(priceB, b.size);
-        case 'rating':
-          return b.rating - a.rating;
-        case 'biggest-discount': {
-          const discA = getDiscountPercentage(a.mrp, priceA);
-          const discB = getDiscountPercentage(b.mrp, priceB);
-          return discB - discA;
-        }
-        case 'recommended':
-        default:
-          return (b.isTrending ? 1 : 0) - (a.isTrending ? 1 : 0) || b.rating - a.rating;
-      }
-    });
+    return filterAndSortProducts(products, filterState);
   }, [products, filterState]);
 
   const activeFiltersCount = [
@@ -107,8 +44,14 @@ export const ProductCatalog: React.FC = () => {
             Curated Formulations Catalog
           </h2>
           <p className="text-sm text-espresso-600 mt-1.5 max-w-2xl">
-            Filter 30+ recorded Indian beauty essentials across Nykaa, Tira, Amazon, Purplle, and Blinkit. Compare unit prices and value metrics transparently.
+            Filter 50 recorded Indian beauty essentials across Nykaa, Tira, Amazon, Purplle, and Blinkit. Compare unit prices and value metrics transparently.
           </p>
+          <div className="flex items-center gap-2 mt-2.5">
+            <span className="text-[11px] bg-ivory-200 border border-ivory-300 text-espresso-700 px-2.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span>{activeProductProvider.getMetadata().statusText}</span>
+            </span>
+          </div>
         </div>
 
         {/* Mobile Filter Toggle Button */}
@@ -158,13 +101,16 @@ export const ProductCatalog: React.FC = () => {
               <input
                 type="text"
                 placeholder="Product, active ingredient..."
+                aria-label="Search catalogue"
                 value={filterState.search}
                 onChange={(e) => setFilterState(prev => ({ ...prev, search: e.target.value }))}
                 className="w-full pl-9 pr-3 py-2 bg-ivory-100 border border-ivory-300 rounded-lg text-xs text-espresso-900 focus:outline-none focus:border-plum-500"
               />
               {filterState.search && (
                 <button
+                  type="button"
                   onClick={() => setFilterState(prev => ({ ...prev, search: '' }))}
+                  aria-label="Clear search"
                   className="absolute right-2.5 top-2.5 text-espresso-400 hover:text-espresso-700"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -286,6 +232,7 @@ export const ProductCatalog: React.FC = () => {
               max="6500"
               step="50"
               value={filterState.maxPrice}
+              aria-label="Max recorded price"
               onChange={(e) => setFilterState(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
               className="w-full accent-plum-800 cursor-pointer"
             />
@@ -345,7 +292,11 @@ export const ProductCatalog: React.FC = () => {
               {filterState.search && (
                 <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full">
                   Keyword: "{filterState.search}"
-                  <button onClick={() => setFilterState(p => ({ ...p, search: '' }))}>
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, search: '' }))}
+                    aria-label="Remove search keyword filter"
+                  >
                     <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
                   </button>
                 </span>
@@ -353,7 +304,11 @@ export const ProductCatalog: React.FC = () => {
               {filterState.category !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full capitalize">
                   Category: {filterState.category}
-                  <button onClick={() => setFilterState(p => ({ ...p, category: 'all' }))}>
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, category: 'all' }))}
+                    aria-label="Remove category filter"
+                  >
                     <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
                   </button>
                 </span>
@@ -361,7 +316,11 @@ export const ProductCatalog: React.FC = () => {
               {filterState.brand !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full">
                   Brand: {filterState.brand}
-                  <button onClick={() => setFilterState(p => ({ ...p, brand: 'all' }))}>
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, brand: 'all' }))}
+                    aria-label="Remove brand filter"
+                  >
                     <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
                   </button>
                 </span>
@@ -369,7 +328,11 @@ export const ProductCatalog: React.FC = () => {
               {filterState.skinType !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full">
                   Skin: {filterState.skinType}
-                  <button onClick={() => setFilterState(p => ({ ...p, skinType: 'all' }))}>
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, skinType: 'all' }))}
+                    aria-label="Remove skin type filter"
+                  >
                     <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
                   </button>
                 </span>
@@ -377,12 +340,29 @@ export const ProductCatalog: React.FC = () => {
               {filterState.concern !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full">
                   Concern: {filterState.concern}
-                  <button onClick={() => setFilterState(p => ({ ...p, concern: 'all' }))}>
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, concern: 'all' }))}
+                    aria-label="Remove concern filter"
+                  >
+                    <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
+                  </button>
+                </span>
+              )}
+              {filterState.maxPrice < 6500 && (
+                <span className="inline-flex items-center gap-1 bg-ivory-200 border border-ivory-300 text-espresso-800 text-xs px-2.5 py-1 rounded-full">
+                  ≤ ₹{filterState.maxPrice.toLocaleString('en-IN')}
+                  <button 
+                    type="button"
+                    onClick={() => setFilterState(p => ({ ...p, maxPrice: 6500 }))}
+                    aria-label="Remove max price filter"
+                  >
                     <X className="w-3 h-3 text-espresso-500 hover:text-espresso-800" />
                   </button>
                 </span>
               )}
               <button
+                type="button"
                 onClick={resetFilters}
                 className="text-xs text-plum-800 font-semibold underline ml-1 cursor-pointer"
               >
@@ -405,17 +385,33 @@ export const ProductCatalog: React.FC = () => {
                 <Search className="w-8 h-8" />
               </div>
               <h3 className="font-serif text-xl font-bold text-espresso-900">
-                No beauty products match your filters
+                {filterState.search.trim()
+                  ? `No beauty products match "${filterState.search}"`
+                  : 'No beauty products match your filters'}
               </h3>
               <p className="text-sm text-espresso-600 max-w-md mx-auto mt-2">
-                Try widening your price range, searching a different active ingredient, or resetting active filters.
+                {filterState.search.trim()
+                  ? 'Try searching by brand (e.g., "Dot & Key", "Minimalist"), key ingredient (e.g., "Niacinamide"), or clearing current filters.'
+                  : 'Try widening your price range, searching a different active ingredient, or resetting active filters.'}
               </p>
-              <button
-                onClick={resetFilters}
-                className="mt-6 px-5 py-2.5 bg-plum-800 hover:bg-plum-900 text-ivory-100 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                Reset All Filters
-              </button>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                {filterState.search.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterState(prev => ({ ...prev, search: '' }))}
+                    className="px-5 py-2.5 bg-ivory-200 hover:bg-ivory-300 text-espresso-900 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                  >
+                    Clear Search Query
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="px-5 py-2.5 bg-plum-800 hover:bg-plum-900 text-ivory-100 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                >
+                  Reset All Filters
+                </button>
+              </div>
             </div>
           )}
 

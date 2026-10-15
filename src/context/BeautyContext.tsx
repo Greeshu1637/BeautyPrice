@@ -28,7 +28,7 @@ interface BeautyContextType {
   dismissNotice: () => void;
 }
 
-const DEFAULT_PROFILE: UserProfile = {
+export const DEFAULT_PROFILE: UserProfile = {
   skinType: 'Combination',
   concerns: ['Acne & Blemishes', 'Sun Protection'],
   budgetTier: 'all',
@@ -36,7 +36,7 @@ const DEFAULT_PROFILE: UserProfile = {
   fragranceFreeOnly: false,
 };
 
-const DEFAULT_FILTERS: FilterState = {
+export const DEFAULT_FILTERS: FilterState = {
   search: '',
   category: 'all',
   subcategory: 'all',
@@ -57,7 +57,11 @@ export const BeautyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [profile, setProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem('beautyprice_profile');
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...DEFAULT_PROFILE, ...parsed };
+      }
+      return DEFAULT_PROFILE;
     } catch {
       return DEFAULT_PROFILE;
     }

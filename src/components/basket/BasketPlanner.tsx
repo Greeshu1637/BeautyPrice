@@ -18,7 +18,7 @@ export const BasketPlanner: React.FC = () => {
 
   const analytics = calculateBasketAnalytics(basket, products);
 
-  if (basket.length === 0) {
+  if (basket.length === 0 || analytics.totalItemsCount === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <div className="w-20 h-20 mx-auto rounded-full bg-blush-100 flex items-center justify-center text-plum-800 mb-5">

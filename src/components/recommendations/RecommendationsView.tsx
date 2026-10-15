@@ -174,7 +174,7 @@ export const RecommendationsView: React.FC = () => {
                           </span>
                         </div>
                         <span className="text-[11px] text-espresso-500 block">
-                          Recorded on {lowestOffer?.retailer || 'Nykaa'}
+                          Recorded on {lowestOffer?.retailer || 'Nykaa'} (Sample)
                         </span>
                       </div>
 

@@ -66,6 +66,7 @@ export const Hero: React.FC = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products (e.g., Minimalist Niacinamide, Sunscreen SPF 50)..."
+              aria-label="Search products and ingredients"
               className="w-full px-3 py-2.5 text-sm sm:text-base text-espresso-900 placeholder:text-espresso-400 bg-transparent focus:outline-none"
             />
             <button

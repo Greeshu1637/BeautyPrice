@@ -10,6 +10,7 @@ import {
   ArrowRight, 
   ExternalLink 
 } from 'lucide-react';
+import { getLowestOffer } from '../../utils/pricing';
 
 export const HomeView: React.FC = () => {
   const { products, setFilterState, setActiveTab, setIsProfileOpen } = useBeauty();
@@ -19,7 +20,7 @@ export const HomeView: React.FC = () => {
 
   // Budget-friendly finds (≤ ₹500 lowest recorded price)
   const budgetFinds = products.filter(p => {
-    const bestPrice = p.retailerOffers[0]?.price || p.mrp;
+    const bestPrice = getLowestOffer(p)?.price || p.mrp;
     return bestPrice <= 500 && p.rating >= 4.4;
   }).slice(0, 4);
 

@@ -18,6 +18,9 @@ export type Concern =
 
 export type RetailerName = 'Nykaa' | 'Tira' | 'Blinkit' | 'Purplle' | 'Amazon' | 'Myntra';
 
+export type PriceStatus = 'illustrative_sample' | 'verified_live';
+export type OfferSource = 'sample_catalog' | 'verified_partner' | 'authorized_feed';
+
 export interface RetailerOffer {
   retailer: RetailerName;
   price: number;
@@ -25,6 +28,10 @@ export interface RetailerOffer {
   offerTag?: string;
   deliverySpeed?: string;
   isLowest?: boolean;
+  productUrl?: string; // Genuine, validated product page destination if available
+  source?: OfferSource; // Provenance of this offer record
+  lastChecked?: string; // Retrieval timestamp (e.g., ISO date)
+  priceStatus?: PriceStatus; // 'illustrative_sample' vs 'verified_live'
 }
 
 export interface PriceHistoryPoint {

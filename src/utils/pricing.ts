@@ -120,6 +120,20 @@ export function calculateBasketAnalytics(basket: BasketItem[], allProducts: Prod
     };
   }).filter(entry => entry.product !== undefined);
 
+  if (itemDetails.length === 0) {
+    return {
+      retailerSummaries: [] as BasketRetailerSummary[],
+      optimalSplit: {
+        totalPrice: 0,
+        mrpTotal: 0,
+        savingsVsMRP: 0,
+        savingsVsHighestRetailer: 0,
+        items: [] as { product: Product; quantity: number; bestOffer: RetailerOffer; lineTotal: number }[],
+      },
+      totalItemsCount: 0,
+    };
+  }
+
   const totalItemsCount = itemDetails.reduce((sum, i) => sum + i.quantity, 0);
   const mrpTotal = itemDetails.reduce((sum, i) => sum + (i.product.mrp * i.quantity), 0);
 
@@ -163,13 +177,17 @@ export function calculateBasketAnalytics(basket: BasketItem[], allProducts: Prod
     return b.availableItemsCount - a.availableItemsCount;
   });
 
-  // 2. Optimal Split (buy each product from whichever retailer recorded the lowest sample price)
+  // 2. Optimal Split (buy each product from whichever retailer recorded the lowest in-stock sample price)
   const optimalItems = itemDetails.map(({ product, quantity }) => {
-    const bestOffer = getLowestOffer(product) || {
-      retailer: 'Nykaa' as RetailerName,
-      price: product.mrp,
-      inStock: true
-    };
+    const inStockOffers = product.retailerOffers.filter(o => o.inStock);
+    const candidateOffers = inStockOffers.length > 0 ? inStockOffers : product.retailerOffers;
+    const bestOffer = candidateOffers.length > 0
+      ? candidateOffers.reduce((lowest, current) => current.price < lowest.price ? current : lowest)
+      : (getLowestOffer(product) || {
+          retailer: 'Nykaa' as RetailerName,
+          price: product.mrp,
+          inStock: true
+        });
     return {
       product,
       quantity,

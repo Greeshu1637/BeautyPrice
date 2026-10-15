@@ -79,6 +79,7 @@ export const Navbar: React.FC = () => {
             <input
               type="text"
               placeholder="Search serum, sunscreen, brand..."
+              aria-label="Search serum, sunscreen, brand"
               value={navSearch}
               onChange={(e) => setNavSearch(e.target.value)}
               className="w-full pl-9.5 pr-4 py-2 bg-ivory-200 border border-ivory-300 rounded-full text-xs text-espresso-900 placeholder:text-espresso-400 focus:outline-none focus:border-plum-400 focus:bg-white transition-all shadow-inner"
@@ -151,6 +152,7 @@ export const Navbar: React.FC = () => {
             <input
               type="text"
               placeholder="Search products, brands, or ingredients..."
+              aria-label="Search products, brands, or ingredients"
               value={navSearch}
               onChange={(e) => setNavSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-ivory-300 rounded-lg text-sm text-espresso-900 focus:outline-none focus:border-plum-600"

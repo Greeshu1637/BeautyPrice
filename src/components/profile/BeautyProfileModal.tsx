@@ -30,6 +30,17 @@ export const BeautyProfileModal: React.FC = () => {
     }
   }, [isProfileOpen, profile]);
 
+  // Escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsProfileOpen(false);
+    };
+    if (isProfileOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isProfileOpen, setIsProfileOpen]);
+
   if (!isProfileOpen) return null;
 
   const toggleConcern = (concern: Concern) => {
@@ -52,6 +63,15 @@ export const BeautyProfileModal: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    resetProfile();
+    setLocalSkinType('Combination');
+    setLocalConcerns(['Acne & Blemishes', 'Sun Protection']);
+    setLocalBudget('all');
+    setLocalCategories(['skincare', 'haircare', 'makeup', 'bodycare']);
+    setLocalFragranceFree(false);
+  };
+
   const handleSave = () => {
     updateProfile({
       skinType: localSkinType,
@@ -70,6 +90,7 @@ export const BeautyProfileModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-modal-title"
+      onClick={() => setIsProfileOpen(false)}
     >
       <div 
         className="bg-ivory-100 rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-modal border border-ivory-300 relative flex flex-col"
@@ -251,6 +272,7 @@ export const BeautyProfileModal: React.FC = () => {
               }`}
               role="switch"
               aria-checked={localFragranceFree}
+              aria-label="Filter for Fragrance-Free Formulations Only"
             >
               <div
                 className={`w-5 h-5 rounded-full bg-white transition-transform transform shadow-xs ${
@@ -266,7 +288,7 @@ export const BeautyProfileModal: React.FC = () => {
         <div className="p-4 bg-white border-t border-ivory-300 flex items-center justify-between">
           <button
             type="button"
-            onClick={resetProfile}
+            onClick={handleReset}
             className="text-xs text-espresso-600 hover:text-espresso-900 font-medium underline cursor-pointer"
           >
             Reset to Defaults

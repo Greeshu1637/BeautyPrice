@@ -2,7 +2,7 @@ import React from 'react';
 import { Product } from '../../types';
 import { useBeauty } from '../../context/BeautyContext';
 import { findSimilarAlternatives } from '../../utils/similarity';
-import { formatCurrency } from '../../utils/pricing';
+import { formatCurrency, getLowestOffer } from '../../utils/pricing';
 import { Scale, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AlternativesSectionProps {
@@ -114,7 +114,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({ produc
                 <div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold text-espresso-950">
-                      {formatCurrency(item.retailerOffers[0]?.price || item.mrp)}
+                      {formatCurrency(getLowestOffer(item)?.price || item.mrp)}
                     </span>
                     <span className="text-[10px] text-espresso-400 line-through">
                       MRP {formatCurrency(item.mrp)}

@@ -11,7 +11,8 @@ import {
   Info, 
   Star, 
   Clock, 
-  Tag
+  Tag,
+  ExternalLink
 } from 'lucide-react';
 import { useBeauty } from '../../context/BeautyContext';
 import { 
@@ -37,6 +38,13 @@ export const ProductDetailModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setSelectedProduct]);
 
+  // Reset tab to offers when viewing a different product (e.g. from alternatives)
+  useEffect(() => {
+    if (selectedProduct?.id) {
+      setActiveTab('offers');
+    }
+  }, [selectedProduct?.id]);
+
   if (!selectedProduct) return null;
 
   const product = selectedProduct;
@@ -52,6 +60,7 @@ export const ProductDetailModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      onClick={() => setSelectedProduct(null)}
     >
       <div 
         className="bg-ivory-100 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-modal border border-ivory-300 relative flex flex-col"
@@ -255,7 +264,7 @@ export const ProductDetailModal: React.FC = () => {
               <div className="bg-blush-50 border border-blush-200 p-3.5 rounded-xl flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-plum-700 shrink-0 mt-0.5" />
                 <div className="text-xs text-espresso-700">
-                  <strong className="text-plum-900">Demonstration Sample Data:</strong> The recorded prices below are simulated observations for prototype demonstration. BeautyPrice does not scrape or claim verified live checkout pricing.
+                  <strong className="text-plum-900">Retailer Integration & Data Provenance Notice:</strong> The recorded offers below are illustrative demonstration samples. External platforms (Nykaa, Tira, Amazon, Purplle, Blinkit, Myntra) are not currently connected via live APIs or automated web scraping. Direct product links are only shown when verified and active.
                 </div>
               </div>
 
@@ -270,6 +279,7 @@ export const ProductDetailModal: React.FC = () => {
                         <th className="py-3 px-4">Promotional Tag</th>
                         <th className="py-3 px-4">True Unit Cost</th>
                         <th className="py-3 px-4 text-right">Recorded Price</th>
+                        <th className="py-3 px-4 text-center">Retailer Page</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ivory-200">
@@ -292,7 +302,8 @@ export const ProductDetailModal: React.FC = () => {
                                 )}
                               </div>
                               <span className="text-[10px] text-espresso-400 block mt-0.5">
-                                Sample Record #BP-IND-{idx + 10}
+                                {offer.priceStatus === 'verified_live' ? 'Verified Live Price' : 'Sample Benchmark'}
+                                {offer.lastChecked ? ` · Checked ${offer.lastChecked}` : ''}
                               </span>
                             </td>
 
@@ -333,6 +344,24 @@ export const ProductDetailModal: React.FC = () => {
                               <span className="block text-[10px] text-espresso-400">
                                 vs MRP {formatCurrency(product.mrp)}
                               </span>
+                            </td>
+
+                            <td className="py-3.5 px-4 text-center">
+                              {offer.productUrl && (offer.productUrl.startsWith('https://') || offer.productUrl.startsWith('http://')) ? (
+                                <a
+                                  href={offer.productUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-plum-800 hover:text-plum-950 underline"
+                                >
+                                  <span>Visit Store</span>
+                                  <ExternalLink className="w-3 h-3 text-plum-700" />
+                                </a>
+                              ) : (
+                                <span className="text-[11px] text-espresso-400 italic">
+                                  Retailer link unavailable
+                                </span>
+                              )}
                             </td>
                           </tr>
                         );
